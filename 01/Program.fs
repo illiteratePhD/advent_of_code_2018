@@ -3,9 +3,11 @@
 
 
 
-module SumOfDeltas
+module Challenge01
 
 open System.IO
+
+// Parse data
 
 let readDeltas filePath = File.ReadLines(filePath)
 
@@ -17,13 +19,27 @@ let tryParseInt s =
 let linesToList readValues = 
     Seq.choose tryParseInt readValues |> Seq.toList
 
-let rec addDeltas = function
-    | [] -> 0
-    | x::xs -> x + addDeltas xs
+let getListOfDeltas s = 
+    readDeltas s |> linesToList
 
-let deltas = readDeltas("input.txt");
+// First assignment, sum of deltas
+
+let rec sumOfDeltas = function
+    | [] -> 0
+    | x::xs -> x + sumOfDeltas xs
+
+// Second assignment, first recurring frequency
+
+let rec firstDuplicateFrequency (deltas:List<int>, visitedFrequencies:Set<int>, currentFrequency: int) = 
+    match visitedFrequencies.Contains currentFrequency with
+    | true -> currentFrequency
+    | false -> match deltas with
+               | [] -> 0
+               | x::xs -> firstDuplicateFrequency (xs @ [x], (visitedFrequencies.Add currentFrequency), (currentFrequency + x))
 
 [<EntryPoint>]
 let main argv = 
-    printfn "Sum of deltas is: %d" (readDeltas "input.txt" |> linesToList |> addDeltas)
+    let deltas = getListOfDeltas "input.txt"
+    printfn "Sum of deltas is: %d" (sumOfDeltas deltas)
+    printfn "First duplicate frequency is: %d" (firstDuplicateFrequency (deltas, Set.empty, 0))
     0 // return an integer exit code
