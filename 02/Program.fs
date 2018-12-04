@@ -7,6 +7,8 @@ open System.Collections.Generic
 
 let readTags filePath = File.ReadLines(filePath) |> Seq.toList
 
+// Solve problem
+
 let getCharacterCounts (s:string, m:Dictionary<char, int>) = 
     s |> Seq.iter (fun c -> match m.ContainsKey c with
                             | true -> m.[c] <- (m.[c] + 1)
