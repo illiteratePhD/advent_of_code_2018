@@ -2,6 +2,7 @@
 
 open System.IO
 open System.Text.RegularExpressions
+open System.Collections.Specialized
 
 type Point (x:int, y:int) =
     member this.X = x
@@ -13,8 +14,6 @@ type Rect (x:int, y:int, width:int, height:int) =
     member this.Y = y
     member this.Width = width
     member this.Height = height  
-
-    member this.RectangleRegEx = @"^#[0-9]+ @ ([0-9]+),([0-9]+): ([0-9]+)x([0-9]+)$"
 
     member this.IsInside (x, y) = 
         if (x < this.X) then 
@@ -48,8 +47,27 @@ let rec parseRectsFromInputs entries rects =
     match entries with
     | [] -> rects
     | (x::xs) -> 
-        let rects = (parseRect x).Value::rects
+        let rects = rects @ [(parseRect x).Value]
         parseRectsFromInputs xs rects
+
+        
+let isPatchOverlapped (p:int*int, r:list<Rect>) = 
+    let r = List.toArray r
+    let mutable i = 0
+    let mutable overlapCount = 0
+    while overlapCount < 2 && i < r.Length do
+        if (r.[i].IsInside(fst(p), snd(p))) then
+            overlapCount <- overlapCount + 1
+        i <- (i + 1)
+    overlapCount > 1
+
+let countOverlappedPatches w h rects = 
+    let results = seq { for row in 0 .. h - 1 do
+                           for col in 0 .. w - 1 do
+                              yield match isPatchOverlapped((row, col), rects) with
+                                    | true -> 1
+                                    | false -> 0 }
+    Seq.sum results
 
 [<EntryPoint>]
 let main argv = 
@@ -58,7 +76,6 @@ let main argv =
 
     let entries = "input.txt" |> readInput
     let rectangles = parseRectsFromInputs entries List<Rect>.Empty
-    printfn "Rectangles: %d" rectangles.Length
-    printfn "Rectangle 2 [x: %d,y: %d,w: %d,h: %d]" (rectangles.Item(1).X) (rectangles.Item(1).Y) (rectangles.Item(1).Width) (rectangles.Item(1).Height)
+    printfn "Overlap counts = %A" (countOverlappedPatches fabricWidth fabricHeight rectangles)
 
     0 // return an integer exit code
