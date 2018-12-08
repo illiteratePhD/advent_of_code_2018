@@ -11,25 +11,23 @@ let areReactants (a:byte, b:byte) = Math.Abs((int a) - (int b)) = 32
 
 let removeReactants (arr:array<byte>) = 
     let result : byte array = Array.zeroCreate arr.Length
+    result.[0] <- arr.[0]
     let mutable resInd = 0
-    let mutable lowInd = 0
     let mutable highInd = 1
 
     while highInd < arr.Length do
-        printf "Checking %A and %A\n" (byteArrToUtf [|arr.[lowInd]|]) (byteArrToUtf [|arr.[highInd]|])
-        while highInd < arr.Length && areReactants(arr.[lowInd], arr.[highInd]) do
-            printf "Removing %A and %A\n" (byteArrToUtf [|arr.[lowInd]|]) (byteArrToUtf [|arr.[highInd]|])
-            resInd <- if resInd - 1 < 0 then 0 else resInd - 1
-            highInd <- if lowInd - 1 < 0 then highInd + 2 else highInd + 1
-            lowInd <- if lowInd - 1 < 0 then highInd - 1 else lowInd - 1
-            printf "Checking %A and %A\n" (byteArrToUtf [|arr.[lowInd]|]) (byteArrToUtf [|arr.[highInd]|])
-        result.[resInd] <- arr.[lowInd]
-        printf "Result: %A \n" (byteArrToUtf result.[0..10])
+        while highInd < arr.Length && areReactants(result.[resInd], arr.[highInd]) do
+            if resInd - 1 < 0 then
+                resInd <- 0
+                highInd <- highInd + 2
+                result.[0] <- arr.[highInd - 1]
+            else
+                Array.Clear(result, resInd, 1)
+                resInd <- resInd - 1
+                highInd <- highInd + 1
         resInd <- resInd + 1
-        lowInd <- highInd
+        result.[resInd] <- arr.[highInd]
         highInd <- highInd + 1
-    
-    result.[resInd] <- arr.[lowInd]
     result
 
 let pruneAndConvert (arr:array<byte>) =
@@ -40,16 +38,17 @@ let pruneAndConvert (arr:array<byte>) =
 let main argv = 
 
     // Testing the algorithm
-    //let testString = "dabAcCaCBAcCcaDA"B
-    //let testResult = removeReactants testString
+    let testString = "dabAcCaCBAcCcaDA"B
+    let testResult = removeReactants testString
     
-    //printfn "Result for demo data: %A" (pruneAndConvert testResult)
+    printfn "Result for demo data: %A" (pruneAndConvert testResult)
 
     // Running real data part 1
+    let stopWatch = System.Diagnostics.Stopwatch.StartNew()
     let polyString = getInput "input.txt"
     let polyAscii =  utfToByteArr polyString
     let realResult = removeReactants polyAscii
-    
-    printfn "Length of result for real data: %A" (pruneAndConvert realResult).Length
+    stopWatch.Stop()
+    printfn "Length of result for real data: %A. Time of execution is: %f" (pruneAndConvert realResult).Length stopWatch.Elapsed.TotalMilliseconds
 
     0 // return an integer exit code
