@@ -25,10 +25,18 @@ let removeReactants (arr:array<byte>) =
                 Array.Clear(result, resInd, 1)
                 resInd <- resInd - 1
                 highInd <- highInd + 1
-        resInd <- resInd + 1
-        result.[resInd] <- arr.[highInd]
-        highInd <- highInd + 1
+        if highInd < arr.Length then
+            resInd <- resInd + 1
+            result.[resInd] <- arr.[highInd]
+            highInd <- highInd + 1
     result
+
+let ignore (a:byte, b:byte) = 
+    let diff = Math.Abs((int a) - (int b))
+    (diff = 0 || diff = 32)
+
+let removeIgnored (arr:array<byte>, ignoreChar:byte) = 
+    arr |> Array.where(fun e -> ignore(e, ignoreChar) |> not)
 
 let pruneAndConvert (arr:array<byte>) =
     let index = arr |> Array.findIndex(fun e -> e = 0uy)
@@ -50,5 +58,17 @@ let main argv =
     let realResult = removeReactants polyAscii
     stopWatch.Stop()
     printfn "Length of result for real data: %A. Time of execution is: %f" (pruneAndConvert realResult).Length stopWatch.Elapsed.TotalMilliseconds
+
+    // Evaluating best char to drop for part 2
+    let mutable minLength = Int32.MaxValue
+    for i in 65uy..90uy do
+        printf "Testing character %A / %A.\n" (byteArrToUtf([|i|])) (byteArrToUtf([|i + 32uy|]))
+        let unitRemoved = removeIgnored(polyAscii, i)
+        let evalResult = removeReactants(unitRemoved)
+        let length = (pruneAndConvert evalResult).Length
+        if length < minLength then minLength <- length
+        printf "Resulting length: %A\n" length
+    
+    printfn "Minimum length of evaluation: %A." minLength
 
     0 // return an integer exit code
